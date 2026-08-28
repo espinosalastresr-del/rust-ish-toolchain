@@ -1,0 +1,68 @@
+name: Build Rust toolchain for iSH x86
+
+on:
+  workflow_dispatch:
+    inputs:
+      rust_version:
+        description: "Rust release to build"
+        required: true
+        default: "1.96.0"
+      target_cpu:
+        description: "Minimum x86 CPU baseline"
+        required: true
+        default: "pentium"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: i386/alpine:3.24
+
+    steps:
+      - name: Install build dependencies
+        run: |
+          apk add --no-cache \
+            bash \
+            build-base \
+            clang \
+            cmake \
+            curl \
+            file \
+            git \
+            linux-headers \
+            llvm \
+            make \
+            musl-dev \
+            openssl-dev \
+            perl \
+            python3 \
+            tar \
+            xz
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build
+        env:
+          RUST_VERSION: ${{ inputs.rust_version }}
+          TARGET_CPU: ${{ inputs.target_cpu }}
+        run: bash scripts/build.sh
+
+      - name: Strip
+        run: bash scripts/strip.sh
+
+      - name: Verify
+        run: bash scripts/verify.sh
+
+      - name: Package
+        run: bash scripts/package.sh
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rust-ish-i586-musl
+          path: |
+            dist/*.tar.xz
+            dist/*.sha256
+            dist/build-info.txt
+          if-no-files-found: error

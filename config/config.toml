@@ -1,0 +1,17 @@
+# Rust bootstrap configuration for a conservative 32-bit x86 build.
+# The final host/target tuple is validated by the build script.
+
+[llvm]
+download-ci-llvm = false
+
+[build]
+extended = true
+tools = ["cargo", "rustfmt", "rustdoc"]
+submodules = false
+locked-deps = true
+
+[rust]
+debuginfo-level = 0
+debug-assertions = false
+overflow-checks = false
+incremental = false

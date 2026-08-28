@@ -1,0 +1,4 @@
+work/
+dist/
+*.tar.xz
+*.sha256
