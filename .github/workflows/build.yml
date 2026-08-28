@@ -6,7 +6,7 @@ on:
       rust_version:
         description: "Rust release to build"
         required: true
-        default: "1.96.0"
+        default: "1.96.1"
       target_cpu:
         description: "Minimum x86 CPU baseline"
         required: true
@@ -15,49 +15,102 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    container:
-      image: i386/alpine:3.24
 
     steps:
-      - name: Install build dependencies
-        run: |
-          apk add --no-cache \
-            bash \
-            build-base \
-            clang \
-            cmake \
-            curl \
-            file \
-            git \
-            linux-headers \
-            llvm \
-            make \
-            musl-dev \
-            openssl-dev \
-            perl \
-            python3 \
-            tar \
-            xz
-
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
-      - name: Build
+      - name: Show runner architecture
+        run: |
+          uname -a
+          uname -m
+          docker version
+          docker info
+
+      - name: Prepare i386 Alpine build environment
         env:
           RUST_VERSION: ${{ inputs.rust_version }}
           TARGET_CPU: ${{ inputs.target_cpu }}
-        run: bash scripts/build.sh
+        run: |
+          docker pull --platform linux/386 alpine:3.24
 
-      - name: Strip
-        run: bash scripts/strip.sh
+          docker run --rm \
+            --platform linux/386 \
+            -v "${GITHUB_WORKSPACE}:/workspace" \
+            -w /workspace \
+            -e RUST_VERSION="${RUST_VERSION}" \
+            -e TARGET_CPU="${TARGET_CPU}" \
+            alpine:3.24 \
+            sh -euxc '
+              apk add --no-cache \
+                bash \
+                build-base \
+                clang \
+                cmake \
+                curl \
+                file \
+                git \
+                linux-headers \
+                llvm \
+                make \
+                musl-dev \
+                openssl-dev \
+                perl \
+                python3 \
+                tar \
+                xz
 
-      - name: Verify
-        run: bash scripts/verify.sh
+              bash scripts/build.sh
+            '
 
-      - name: Package
-        run: bash scripts/package.sh
+      - name: Strip toolchain
+        run: |
+          docker run --rm \
+            --platform linux/386 \
+            -v "${GITHUB_WORKSPACE}:/workspace" \
+            -w /workspace \
+            alpine:3.24 \
+            sh -euxc '
+              apk add --no-cache file binutils
+              bash scripts/strip.sh
+            '
 
-      - name: Upload artifact
+      - name: Verify toolchain
+        run: |
+          docker run --rm \
+            --platform linux/386 \
+            -v "${GITHUB_WORKSPACE}:/workspace" \
+            -w /workspace \
+            alpine:3.24 \
+            sh -euxc '
+              apk add --no-cache \
+                bash \
+                build-base \
+                file \
+                musl-dev \
+                binutils
+
+              bash scripts/verify.sh
+            '
+
+      - name: Package toolchain
+        run: |
+          docker run --rm \
+            --platform linux/386 \
+            -v "${GITHUB_WORKSPACE}:/workspace" \
+            -w /workspace \
+            alpine:3.24 \
+            sh -euxc '
+              apk add --no-cache bash tar xz coreutils
+              bash scripts/package.sh
+            '
+
+      - name: Show artifacts
+        run: |
+          ls -lah dist/
+          sha256sum dist/* || true
+
+      - name: Upload toolchain
         uses: actions/upload-artifact@v4
         with:
           name: rust-ish-i586-musl
