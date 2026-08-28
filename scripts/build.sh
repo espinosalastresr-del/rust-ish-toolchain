@@ -2,53 +2,139 @@
 set -euo pipefail
 
 : "${RUST_VERSION:?RUST_VERSION is required}"
-: "${TARGET_CPU:?TARGET_CPU is required}"
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WORK="${ROOT}/work"
 SRC="${WORK}/rust"
-PREFIX="${WORK}/stage/usr/local/rust"
-TARGET="i586-unknown-linux-musl"
+STAGE="${WORK}/stage"
+PREFIX="${STAGE}/usr/local/rust"
+
+HOST="i586-alpine-linux-musl"
 
 rm -rf "${WORK}"
-mkdir -p "${WORK}" "${PREFIX}"
+mkdir -p "${WORK}" "${STAGE}" "${PREFIX}"
+
+echo "========================================"
+echo "Rust iSH Toolchain Builder"
+echo "========================================"
+echo "Rust version : ${RUST_VERSION}"
+echo "Host         : ${HOST}"
+echo "CPU baseline : pentium"
+echo "========================================"
+
+echo
+echo "[1/7] Installing Alpine bootstrap Rust..."
+
+apk add --no-cache \
+    rust \
+    cargo \
+    rust-src \
+    rust-stdlib \
+    gcc \
+    g++ \
+    musl-dev \
+    binutils \
+    make \
+    cmake \
+    clang \
+    llvm \
+    python3 \
+    perl \
+    curl \
+    git \
+    file \
+    tar \
+    xz
+
+echo
+echo "[2/7] Checking bootstrap compiler..."
+
+rustc --version
+cargo --version
+rustc --version --verbose
+
+BOOTSTRAP_HOST="$(rustc --version --verbose | awk '/^host:/ {print $2}')"
+
+if [ "${BOOTSTRAP_HOST}" != "${HOST}" ]; then
+    echo "ERROR: Bootstrap compiler host is:"
+    echo "  ${BOOTSTRAP_HOST}"
+    echo
+    echo "Expected:"
+    echo "  ${HOST}"
+    exit 1
+fi
+
+echo
+echo "[3/7] Downloading Rust source..."
 
 cd "${WORK}"
-curl -fL --retry 5 --retry-delay 2 \
-  "https://static.rust-lang.org/dist/rust-${RUST_VERSION}-src.tar.xz" \
-  -o rust-src.tar.xz
-tar -xJf rust-src.tar.xz
-mv "rust-${RUST_VERSION}" "${SRC}"
+
+SOURCE_ARCHIVE="rustc-${RUST_VERSION}-src.tar.xz"
+SOURCE_URL="https://static.rust-lang.org/dist/${SOURCE_ARCHIVE}"
+
+echo "Downloading:"
+echo "${SOURCE_URL}"
+
+curl \
+    --fail \
+    --location \
+    --retry 5 \
+    --retry-delay 3 \
+    --retry-all-errors \
+    --output "${SOURCE_ARCHIVE}" \
+    "${SOURCE_URL}"
+
+echo
+echo "[4/7] Extracting source..."
+
+tar -xJf "${SOURCE_ARCHIVE}"
+
+mv "rustc-${RUST_VERSION}-src" "${SRC}"
 
 cd "${SRC}"
 
+echo
+echo "[5/7] Preparing bootstrap configuration..."
+
 cp "${ROOT}/config/config.toml" config.toml
 
-# Rust bootstrap requires a stage0 compiler. Fetch the matching official
-# source distribution metadata and bootstrap compiler for this architecture.
+echo
+echo "Bootstrap compiler:"
+rustc --version
+
+echo
+echo "Target list:"
+rustc --print target-list | grep -E 'i586.*alpine.*musl|i686.*alpine.*musl' || true
+
+echo
+echo "[6/7] Building Rust..."
+
 ./x.py build \
-  --stage 2 \
-  --host i586-unknown-linux-musl \
-  --target i586-unknown-linux-musl \
-  library/std \
-  compiler/rustc \
-  src/tools/cargo \
-  src/tools/rustfmt \
-  src/tools/rustdoc
+    --stage 2 \
+    library/std \
+    compiler/rustc \
+    src/tools/cargo \
+    src/tools/rustfmt \
+    src/tools/rustdoc
 
-# Install the produced components into a self-contained prefix.
+echo
+echo "[7/7] Installing toolchain..."
+
 ./x.py install \
-  --stage 2 \
-  --host i586-unknown-linux-musl \
-  --target i586-unknown-linux-musl \
-  --prefix "${PREFIX}" \
-  library/std \
-  compiler/rustc \
-  src/tools/cargo \
-  src/tools/rustfmt \
-  src/tools/rustdoc
+    --stage 2 \
+    --prefix "${PREFIX}" \
+    library/std \
+    compiler/rustc \
+    src/tools/cargo \
+    src/tools/rustfmt \
+    src/tools/rustdoc
 
-# Record requested CPU baseline for later verification.
-printf '%s\n' "${TARGET_CPU}" > "${PREFIX}/TARGET_CPU"
-printf '%s\n' "${TARGET}" > "${PREFIX}/TARGET"
-printf '%s\n' "${RUST_VERSION}" > "${PREFIX}/RUST_VERSION"
+echo "${RUST_VERSION}" > "${PREFIX}/RUST_VERSION"
+echo "${HOST}" > "${PREFIX}/TARGET"
+echo "pentium" > "${PREFIX}/TARGET_CPU"
+
+echo
+echo "Build completed."
+echo
+echo "Installed files:"
+find "${PREFIX}/bin" -maxdepth 1 -type f -print 2>/dev/null || true
