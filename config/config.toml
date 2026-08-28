@@ -1,10 +1,8 @@
-# Rust bootstrap configuration for a conservative 32-bit x86 build.
-# The final host/target tuple is validated by the build script.
-
-[llvm]
-download-ci-llvm = false
-
 [build]
+build = "i586-alpine-linux-musl"
+host = ["i586-alpine-linux-musl"]
+target = ["i586-alpine-linux-musl"]
+
 extended = true
 tools = ["cargo", "rustfmt", "rustdoc"]
 submodules = false
@@ -15,3 +13,13 @@ debuginfo-level = 0
 debug-assertions = false
 overflow-checks = false
 incremental = false
+codegen-units = 1
+
+[target.i586-alpine-linux-musl]
+cc = "gcc"
+cxx = "g++"
+ar = "ar"
+linker = "gcc"
+rustflags = [
+    "-Ctarget-cpu=pentium"
+]
