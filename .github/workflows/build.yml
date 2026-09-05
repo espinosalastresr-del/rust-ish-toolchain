@@ -1,135 +1,37 @@
-name: Build Rust toolchain for iSH x86
+# Silencia la advertencia sobre change-id (opcional pero recomendado)
+change-id = "ignore"
 
-on:
-  workflow_dispatch:
-    inputs:
-      rust_version:
-        description: "Rust version"
-        required: true
-        default: "1.96.1"
-        type: string
-      target_cpu:
-        description: "Minimum x86 CPU"
-        required: true
-        default: "pentium"
-        type: string
+[build]
+build = "i586-alpine-linux-musl"
+host = ["i586-alpine-linux-musl"]
+target = ["i586-alpine-linux-musl"]
+extended = true
+tools = ["cargo", "rustfmt", "rustdoc"]
+submodules = false
+locked-deps = true
 
-jobs:
-  build:
-    name: Build on Alpine i386
-    runs-on: ubuntu-latest
+# Usa el compilador y cargo instalados por apk
+rustc = "/usr/bin/rustc"
+cargo = "/usr/bin/cargo"
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
+[rust]
+# Evita descargar componentes precompilados
+download-rustc = false
 
-      - name: Pull Alpine i386
-        run: |
-          docker pull --platform linux/386 alpine:3.24
+debuginfo-level = 0
+debug-assertions = false
+overflow-checks = false
+incremental = false
+codegen-units = 1
 
-      - name: Build Rust toolchain
-        env:
-          RUST_VERSION: ${{ inputs.rust_version }}
-          TARGET_CPU: ${{ inputs.target_cpu }}
-        run: |
-          docker run --rm \
-            --platform linux/386 \
-            -v "${GITHUB_WORKSPACE}:/workspace" \
-            -w /workspace \
-            -e RUST_VERSION="${RUST_VERSION}" \
-            -e TARGET_CPU="${TARGET_CPU}" \
-            alpine:3.24 \
-            sh -euxc '
-              apk add --no-cache \
-                bash \
-                build-base \
-                clang \
-                cmake \
-                curl \
-                file \
-                git \
-                linux-headers \
-                llvm \
-                make \
-                musl-dev \
-                openssl-dev \
-                perl \
-                python3 \
-                rust \
-                cargo \
-                rust-src \
-                rust-stdlib \
-                tar \
-                xz
+[target.i586-alpine-linux-musl]
+cc = "gcc"
+cxx = "g++"
+ar = "ar"
+linker = "gcc"
 
-              bash scripts/build.sh
-            '
-
-      - name: Strip toolchain
-        run: |
-          docker run --rm \
-            --platform linux/386 \
-            -v "${GITHUB_WORKSPACE}:/workspace" \
-            -w /workspace \
-            alpine:3.24 \
-            sh -euxc '
-              apk add --no-cache \
-                bash \
-                binutils \
-                file
-
-              bash scripts/strip.sh
-            '
-
-      - name: Verify toolchain
-        run: |
-          docker run --rm \
-            --platform linux/386 \
-            -v "${GITHUB_WORKSPACE}:/workspace" \
-            -w /workspace \
-            alpine:3.24 \
-            sh -euxc '
-              apk add --no-cache \
-                bash \
-                build-base \
-                file \
-                musl-dev \
-                binutils
-
-              bash scripts/verify.sh
-            '
-
-      - name: Package
-        run: |
-          docker run --rm \
-            --platform linux/386 \
-            -v "${GITHUB_WORKSPACE}:/workspace" \
-            -w /workspace \
-            alpine:3.24 \
-            sh -euxc '
-              apk add --no-cache \
-                bash \
-                coreutils \
-                tar \
-                xz
-
-              bash scripts/package.sh
-            '
-
-      - name: Show build artifacts
-        run: |
-          echo "=== dist ==="
-          ls -lah dist/
-
-          echo "=== checksums ==="
-          sha256sum dist/*.tar.xz
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: rust-ish-i586-musl
-          path: |
-            dist/*.tar.xz
-            dist/*.sha256
-            dist/build-info.txt
-          if-no-files-found: error
+# Cambia "pentium" por "i686" para mejor compatibilidad con iSH
+# (si aún ves errores de SSE, añade +sse2)
+rustflags = [
+    "-Ctarget-cpu=i686"
+]
