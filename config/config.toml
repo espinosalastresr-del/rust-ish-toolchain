@@ -1,3 +1,5 @@
+change-id = "ignore"
+
 [build]
 build = "i586-alpine-linux-musl"
 host = ["i586-alpine-linux-musl"]
@@ -10,7 +12,7 @@ rustc = "/usr/bin/rustc"
 cargo = "/usr/bin/cargo"
 
 [rust]
-download-rustc = false   # Evita descargar el compilador y std precompilados
+download-rustc = false
 debuginfo-level = 0
 debug-assertions = false
 overflow-checks = false
@@ -23,5 +25,5 @@ cxx = "g++"
 ar = "ar"
 linker = "gcc"
 rustflags = [
-    "-Ctarget-cpu=pentium"
+    "-Ctarget-cpu=i686"
 ]
