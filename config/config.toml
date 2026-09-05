@@ -5,11 +5,15 @@ build = "i586-alpine-linux-musl"
 host = ["i586-alpine-linux-musl"]
 target = ["i586-alpine-linux-musl"]
 extended = true
-tools = ["cargo", "rustfmt", "rustdoc"]
+tools = ["cargo", "rustfmt", "clippy", "rustdoc"]  # ajusta a lo que necesites
 submodules = false
 locked-deps = true
 rustc = "/usr/bin/rustc"
 cargo = "/usr/bin/cargo"
+
+# Usar LLVM del sistema para no compilarlo de nuevo
+llvm-config = "/usr/bin/llvm-config"
+download-ci-llvm = false
 
 [rust]
 download-rustc = false
@@ -17,7 +21,8 @@ debuginfo-level = 0
 debug-assertions = false
 overflow-checks = false
 incremental = false
-codegen-units = 1
+codegen-units = 16          # más unidades = más paralelismo
+lto = false                 # si quieres reducir tamaño, pon true, pero aumenta tiempo
 
 [target.i586-alpine-linux-musl]
 cc = "gcc"
@@ -25,5 +30,6 @@ cxx = "g++"
 ar = "ar"
 linker = "gcc"
 rustflags = [
-    "-Ctarget-cpu=i686"
+    "-Ctarget-cpu=i686",
+    "-Ctarget-feature=+sse,+sse2"
 ]
