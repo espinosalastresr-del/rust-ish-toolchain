@@ -1,13 +1,22 @@
-name: Build Rust for iSH
+name: Build Rust Toolchain for iSH
 
-on: [push, pull_request]
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  RUST_VERSION: 1.96.1
+  TARGET_CPU: i686
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Build Rust
+
+      - name: Build toolchain
         run: |
           docker run --rm \
             --platform linux/386 \
@@ -24,6 +33,47 @@ jobs:
                 tar xz
               bash scripts/build.sh
             '
-        env:
-          RUST_VERSION: 1.96.1
-          TARGET_CPU: i686  # o pentium, pero recomendamos i686
+
+      - name: Verify toolchain
+        run: |
+          docker run --rm \
+            --platform linux/386 \
+            -v "${GITHUB_WORKSPACE}:/workspace" \
+            -w /workspace \
+            alpine:3.24 \
+            sh -c '
+              /workspace/work/stage/usr/local/rust/bin/rustc --version
+              /workspace/work/stage/usr/local/rust/bin/cargo --version
+              /workspace/work/stage/usr/local/rust/bin/rustfmt --version || true
+              /workspace/work/stage/usr/local/rust/bin/clippy-driver --version || true
+            '
+
+      - name: Strip binaries (inside container)
+        run: |
+          docker run --rm \
+            --platform linux/386 \
+            -v "${GITHUB_WORKSPACE}:/workspace" \
+            -w /workspace \
+            alpine:3.24 \
+            sh -c '
+              find /workspace/work/stage/usr/local/rust/bin -type f -exec strip {} \; 2>/dev/null || true
+              find /workspace/work/stage/usr/local/rust/lib -name "*.so*" -exec strip {} \; 2>/dev/null || true
+            '
+
+      - name: Package toolchain
+        run: |
+          docker run --rm \
+            --platform linux/386 \
+            -v "${GITHUB_WORKSPACE}:/workspace" \
+            -w /workspace \
+            alpine:3.24 \
+            sh -c '
+              cd /workspace/work/stage/usr/local
+              tar -czf /workspace/rust-toolchain-${RUST_VERSION}-ish.tar.gz rust
+            '
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rust-toolchain-${{ env.RUST_VERSION }}-ish
+          path: rust-toolchain-${{ env.RUST_VERSION }}-ish.tar.gz
