@@ -112,10 +112,12 @@ echo "[6/7] Building Rust..."
 
 ./x.py build \
     --stage 2 \
+    --jobs 4 \
     library/std \
     compiler/rustc \
     src/tools/cargo \
     src/tools/rustfmt \
+    src/tools/clippy \
     src/tools/rustdoc
 
 echo
