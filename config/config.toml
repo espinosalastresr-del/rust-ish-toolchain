@@ -9,6 +9,7 @@ submodules = false
 locked-deps = true
 
 [rust]
+download_rustc = false   # <-- añade esta línea
 debuginfo-level = 0
 debug-assertions = false
 overflow-checks = false
