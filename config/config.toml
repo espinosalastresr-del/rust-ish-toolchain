@@ -3,7 +3,7 @@ change-id = "ignore"
 [build]
 build = "i586-alpine-linux-musl"
 host = ["i586-alpine-linux-musl"]
-target = ["i586-alpine-linux-musl"]
+target = ["i686-unknown-linux-musl"]      # <-- CAMBIO: target estándar
 extended = true
 tools = ["cargo", "rustfmt", "clippy", "rustdoc"]
 submodules = false
@@ -17,7 +17,7 @@ ninja = true
 
 [rust]
 download-rustc = false
-build-std = true        # <--- AÑADE ESTA LÍNEA
+# build-std = true   # ELIMINADO (no es válido)
 debuginfo-level = 0
 debug-assertions = false
 overflow-checks = false
@@ -25,7 +25,7 @@ incremental = false
 codegen-units = 16
 lto = "off"
 
-[target.i586-alpine-linux-musl]
+[target.i686-unknown-linux-musl]          # <-- CAMBIO: sección del target estándar
 cc = "gcc"
 cxx = "g++"
 ar = "ar"
