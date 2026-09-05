@@ -44,7 +44,8 @@ apk add --no-cache \
     git \
     file \
     tar \
-    xz
+    xz \
+    ninja
 
 echo
 echo "[2/7] Checking bootstrap compiler..."
