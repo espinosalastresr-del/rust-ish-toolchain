@@ -38,6 +38,8 @@ apk add --no-cache \
     cmake \
     clang \
     llvm \
+    linux-headers \
+    llvm-dev \
     python3 \
     perl \
     curl \
