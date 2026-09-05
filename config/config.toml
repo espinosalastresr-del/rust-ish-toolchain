@@ -8,33 +8,19 @@ extended = true
 tools = ["cargo", "rustfmt", "clippy", "rustdoc"]
 submodules = false
 locked-deps = true
-
-# Usa el compilador y cargo instalados por apk
 rustc = "/usr/bin/rustc"
 cargo = "/usr/bin/cargo"
 
-# Apunta al LLVM del sistema (instalado por apk)
-llvm-config = "/usr/bin/llvm-config"
-
 [llvm]
-# No descargues ni compiles LLVM desde cero
 download-ci-llvm = false
 
-# Como tienes ninja instalado (samurai), puedes dejarlo true o no especificarlo.
-# Si no lo tienes, pon false.
-ninja = true
-
 [rust]
-# No descargues componentes precompilados
 download-rustc = false
-
 debuginfo-level = 0
 debug-assertions = false
 overflow-checks = false
 incremental = false
-# Más paralelismo en generación de código (ajusta si la RAM es escasa)
 codegen-units = 16
-# LTO desactivado para mayor velocidad (actívalo si quieres binarios más pequeños)
 lto = false
 
 [target.i586-alpine-linux-musl]
@@ -42,6 +28,7 @@ cc = "gcc"
 cxx = "g++"
 ar = "ar"
 linker = "gcc"
+llvm-config = "/usr/bin/llvm-config"   # <--- AQUÍ es donde debe ir
 rustflags = [
     "-Ctarget-cpu=i686",
     "-Ctarget-feature=+sse,+sse2"
