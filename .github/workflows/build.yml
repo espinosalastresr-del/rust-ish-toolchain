@@ -1,37 +1,29 @@
-# Silencia la advertencia sobre change-id (opcional pero recomendado)
-change-id = "ignore"
+name: Build Rust for iSH
 
-[build]
-build = "i586-alpine-linux-musl"
-host = ["i586-alpine-linux-musl"]
-target = ["i586-alpine-linux-musl"]
-extended = true
-tools = ["cargo", "rustfmt", "rustdoc"]
-submodules = false
-locked-deps = true
+on: [push, pull_request]
 
-# Usa el compilador y cargo instalados por apk
-rustc = "/usr/bin/rustc"
-cargo = "/usr/bin/cargo"
-
-[rust]
-# Evita descargar componentes precompilados
-download-rustc = false
-
-debuginfo-level = 0
-debug-assertions = false
-overflow-checks = false
-incremental = false
-codegen-units = 1
-
-[target.i586-alpine-linux-musl]
-cc = "gcc"
-cxx = "g++"
-ar = "ar"
-linker = "gcc"
-
-# Cambia "pentium" por "i686" para mejor compatibilidad con iSH
-# (si aún ves errores de SSE, añade +sse2)
-rustflags = [
-    "-Ctarget-cpu=i686"
-]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Rust
+        run: |
+          docker run --rm \
+            --platform linux/386 \
+            -v "${GITHUB_WORKSPACE}:/workspace" \
+            -w /workspace \
+            -e RUST_VERSION="${RUST_VERSION}" \
+            -e TARGET_CPU="${TARGET_CPU}" \
+            alpine:3.24 \
+            sh -euxc '
+              apk add --no-cache \
+                bash build-base clang cmake curl file git \
+                linux-headers llvm make musl-dev openssl-dev \
+                perl python3 rust cargo rust-src rust-stdlib \
+                tar xz
+              bash scripts/build.sh
+            '
+        env:
+          RUST_VERSION: 1.96.1
+          TARGET_CPU: i686  # o pentium, pero recomendamos i686
