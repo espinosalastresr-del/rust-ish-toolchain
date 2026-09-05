@@ -12,13 +12,12 @@ rustc = "/usr/bin/rustc"
 cargo = "/usr/bin/cargo"
 
 [llvm]
-# Deja que Rust descargue y compile LLVM desde el código fuente
-download-ci-llvm = true
-# No uses llvm-config (no está en el sistema)
+download-ci-llvm = false
 ninja = true
 
 [rust]
 download-rustc = false
+build-std = true        # <--- AÑADE ESTA LÍNEA
 debuginfo-level = 0
 debug-assertions = false
 overflow-checks = false
@@ -31,7 +30,7 @@ cc = "gcc"
 cxx = "g++"
 ar = "ar"
 linker = "gcc"
-# No incluyas llvm-config aquí
+llvm-config = "/usr/bin/llvm-config"
 rustflags = [
     "-Ctarget-cpu=i686",
     "-Ctarget-feature=+sse,+sse2"
