@@ -8,8 +8,16 @@ tools = ["cargo", "rustfmt", "rustdoc"]
 submodules = false
 locked-deps = true
 
+# Usa el compilador y cargo instalados en el sistema
+rustc = "/usr/bin/rustc"
+cargo = "/usr/bin/cargo"
+
 [rust]
-download_rustc = false   # <-- añade esta línea
+# No descargues componentes precompilados
+download-rustc = false
+# Compila la biblioteca estándar desde el código fuente
+build-std = true
+
 debuginfo-level = 0
 debug-assertions = false
 overflow-checks = false
