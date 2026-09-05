@@ -5,13 +5,14 @@ build = "i586-alpine-linux-musl"
 host = ["i586-alpine-linux-musl"]
 target = ["i586-alpine-linux-musl"]
 extended = true
-tools = ["cargo", "rustfmt", "clippy", "rustdoc"]  # ajusta a lo que necesites
+tools = ["cargo", "rustfmt", "clippy", "rustdoc"]
 submodules = false
 locked-deps = true
 rustc = "/usr/bin/rustc"
 cargo = "/usr/bin/cargo"
 
-# Usar LLVM del sistema para no compilarlo de nuevo
+[llvm]
+# Usar el LLVM del sistema (instalado por apk) para no compilarlo desde fuente
 llvm-config = "/usr/bin/llvm-config"
 download-ci-llvm = false
 
@@ -21,8 +22,8 @@ debuginfo-level = 0
 debug-assertions = false
 overflow-checks = false
 incremental = false
-codegen-units = 16          # más unidades = más paralelismo
-lto = false                 # si quieres reducir tamaño, pon true, pero aumenta tiempo
+codegen-units = 16          # Más paralelismo durante la compilación
+lto = false                 # Desactivado para mayor velocidad (si quieres binarios más pequeños, pon true)
 
 [target.i586-alpine-linux-musl]
 cc = "gcc"
