@@ -21,14 +21,15 @@ debug-assertions = false
 overflow-checks = false
 incremental = false
 codegen-units = 16
-lto = false
+# LTO debe ser un string: "off", "thin", "fat"
+lto = "off"
 
 [target.i586-alpine-linux-musl]
 cc = "gcc"
 cxx = "g++"
 ar = "ar"
 linker = "gcc"
-llvm-config = "/usr/bin/llvm-config"   # <--- AQUÍ es donde debe ir
+llvm-config = "/usr/bin/llvm-config"
 rustflags = [
     "-Ctarget-cpu=i686",
     "-Ctarget-feature=+sse,+sse2"
