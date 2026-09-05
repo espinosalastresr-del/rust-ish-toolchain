@@ -2,22 +2,15 @@
 build = "i586-alpine-linux-musl"
 host = ["i586-alpine-linux-musl"]
 target = ["i586-alpine-linux-musl"]
-
 extended = true
 tools = ["cargo", "rustfmt", "rustdoc"]
 submodules = false
 locked-deps = true
-
-# Usa el compilador y cargo instalados en el sistema
 rustc = "/usr/bin/rustc"
 cargo = "/usr/bin/cargo"
 
 [rust]
-# No descargues componentes precompilados
-download-rustc = false
-# Compila la biblioteca estándar desde el código fuente
-build-std = true
-
+download-rustc = false   # Evita descargar el compilador y std precompilados
 debuginfo-level = 0
 debug-assertions = false
 overflow-checks = false
